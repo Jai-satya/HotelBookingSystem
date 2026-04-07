@@ -23,7 +23,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: umeshgupta050104@gmail.com
-    password: your_16_character_app_password
+    password: rhdf pdnq utpt gynt
     properties:
       mail:
         smtp:
