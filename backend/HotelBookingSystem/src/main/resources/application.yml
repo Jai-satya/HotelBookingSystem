@@ -2,7 +2,7 @@ spring:
   application:
     name: HotelBookingSystem
   datasource:
-    url: jdbc:h2:file:./data/hotel_db;AUTO_SERVER=TRUE
+    url: jdbc:h2:mem:hotel_db
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -12,11 +12,15 @@ spring:
       path: /h2-console
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
   cache:
     type: simple
   mail:

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -25,6 +26,7 @@ const BookingPage = () => {
   const [error, setError] = useState('');
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'payAtHotel'
 
   // Get room and hotelId from navigation state (sent by RoomCard)
   const room = location.state?.room || null;
@@ -66,16 +68,42 @@ const BookingPage = () => {
 
     const price = getPrice();
     const totalAmount = price * nights;
+
+    // ── Pay at Hotel flow ──
+    if (paymentMethod === 'payAtHotel') {
+      try {
+        await api.createBooking({
+          user_id: user?.user_id || 1,
+          hotel_id: parseInt(hotelId),
+          room_id: room?.room_id || room?.roomId,
+          room_name: room?.category_name || room?.roomCategory?.name || 'Room',
+          hotel_name: room?.hotel_name || `Hotel #${hotelId}`,
+          check_in: checkIn,
+          check_out: checkOut,
+          total_amount: totalAmount,
+          payment_method: 'Pay at Hotel'
+        });
+        navigate('/dashboard', {
+          state: {
+            message: "Booking confirmed! Pay ₹" + totalAmount.toLocaleString() + " at the hotel during check-in."
+          }
+        });
+      } catch (err) {
+        setError(err.message || "Failed to save booking.");
+        setProcessing(false);
+      }
+      return;
+    }
+
+    // ── Razorpay flow ──
     const amountInPaise = Math.round(totalAmount * 100);
 
     try {
-      // Load Razorpay SDK
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
         throw new Error("Razorpay SDK failed to load. Please check your internet connection.");
       }
 
-      // Open Razorpay Checkout directly (no backend needed)
       const options = {
         key: "rzp_test_SaXL0fheGFoGLq",
         amount: amountInPaise,
@@ -83,7 +111,6 @@ const BookingPage = () => {
         name: "LuxeStay",
         description: `${room?.category_name || room?.roomCategory?.name || 'Room'} — ${nights} night${nights > 1 ? 's' : ''}`,
         handler: function (response) {
-          // Payment succeeded
           navigate('/dashboard', {
             state: {
               message: "Payment successful! Booking confirmed.",
@@ -178,18 +205,68 @@ const BookingPage = () => {
               </div>
             </div>
 
+            {/* ── Payment Method Selection ── */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
               <h2 className="text-xl font-bold text-slate-800 mb-4">Payment Method</h2>
-              <div className="p-4 border-2 border-indigo-400 bg-indigo-50/30 rounded-xl flex items-center justify-between cursor-pointer">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 rounded-full bg-indigo-500 mr-3"></div>
-                  <span className="font-medium text-brand-navy">Razorpay</span>
+              <div className="space-y-3">
+
+                {/* Option 1 — Razorpay */}
+                <div
+                  onClick={() => setPaymentMethod('razorpay')}
+                  className={`p-4 rounded-xl flex items-center justify-between cursor-pointer transition-all border-2 ${
+                    paymentMethod === 'razorpay'
+                      ? 'border-indigo-400 bg-indigo-50/40 shadow-sm'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
+                      paymentMethod === 'razorpay' ? 'border-indigo-500' : 'border-slate-300'
+                    }`}>
+                      {paymentMethod === 'razorpay' && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-medium text-brand-navy">Razorpay</span>
+                      <p className="text-xs text-slate-400 mt-0.5">Pay securely online now</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-1.5">
+                    <span className="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500">UPI</span>
+                    <span className="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500">Cards</span>
+                    <span className="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500">Netbanking</span>
+                  </div>
                 </div>
-                <div className="flex space-x-2">
-                  <span className="text-xs font-bold bg-slate-200 px-2 py-1 rounded text-slate-600">UPI</span>
-                  <span className="text-xs font-bold bg-slate-200 px-2 py-1 rounded text-slate-600">Cards</span>
-                  <span className="text-xs font-bold bg-slate-200 px-2 py-1 rounded text-slate-600">Netbanking</span>
+
+                {/* Option 2 — Pay at Hotel */}
+                <div
+                  onClick={() => setPaymentMethod('payAtHotel')}
+                  className={`p-4 rounded-xl flex items-center justify-between cursor-pointer transition-all border-2 ${
+                    paymentMethod === 'payAtHotel'
+                      ? 'border-emerald-400 bg-emerald-50/40 shadow-sm'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
+                      paymentMethod === 'payAtHotel' ? 'border-emerald-500' : 'border-slate-300'
+                    }`}>
+                      {paymentMethod === 'payAtHotel' && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-medium text-brand-navy">Pay at Hotel</span>
+                      <p className="text-xs text-slate-400 mt-0.5">Pay cash or card at the front desk during check-in</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-1.5">
+                    <span className="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500">Cash</span>
+                    <span className="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500">Card</span>
+                  </div>
                 </div>
+
               </div>
             </div>
           </div>
@@ -235,11 +312,25 @@ const BookingPage = () => {
                 <button
                   onClick={handlePayment}
                   disabled={processing}
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-full py-3 text-white font-bold rounded-xl transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                    paymentMethod === 'payAtHotel'
+                      ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'
+                      : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30'
+                  }`}
                 >
-                  {processing ? 'Connecting to Razorpay...' : `Pay ₹${total.toLocaleString()}`}
+                  {processing
+                    ? (paymentMethod === 'payAtHotel' ? 'Confirming...' : 'Connecting to Razorpay...')
+                    : (paymentMethod === 'payAtHotel'
+                        ? 'Confirm Booking'
+                        : `Pay ₹${total.toLocaleString()}`)
+                  }
                 </button>
-                <p className="text-xs text-center text-slate-400 mt-4">Secure payment powered by Razorpay</p>
+
+                <p className="text-xs text-center text-slate-400 mt-4">
+                  {paymentMethod === 'payAtHotel'
+                    ? 'No advance payment needed — pay at the front desk'
+                    : 'Secure payment powered by Razorpay'}
+                </p>
               </div>
             </div>
           </div>

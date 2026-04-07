@@ -85,10 +85,21 @@ const MOCK_ROOMS = {
   ]
 };
 
-const MOCK_BOOKINGS = [];
+// localStorage-backed bookings so they survive page navigation and refresh
+const BOOKINGS_STORAGE_KEY = 'luxestay_bookings';
 
-// API configuration
-const API_BASE_URL = 'http://localhost:8080/api';
+const getStoredBookings = () => {
+  try {
+    return JSON.parse(localStorage.getItem(BOOKINGS_STORAGE_KEY)) || [];
+  } catch { return []; }
+};
+
+const saveBookings = (bookings) => {
+  localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(bookings));
+};
+
+// API configuration - Backend at http://localhost:8080
+const API_BASE_URL = '/api';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('hotel_token');
@@ -182,7 +193,6 @@ export const api = {
       });
       return await handleResponse(response);
     } catch (e) {
-      // Mock Razorpay Order for testing visually without backend
       console.warn("Using mock razorpay order");
       return { orderId: "order_mock123", amount: orderRequest.amount * 100, currency: "INR" };
     }
@@ -202,7 +212,7 @@ export const api = {
     }
   },
 
-  // Bookings
+  // Bookings — localStorage backed
   createBooking: async (bookingData) => {
     try {
       const response = await fetch(`${API_BASE_URL}/bookings`, {
@@ -212,9 +222,11 @@ export const api = {
       });
       return await handleResponse(response);
     } catch (e) {
-      console.warn("Mock booking created");
+      console.warn("Mock booking created (localStorage)");
+      const bookings = getStoredBookings();
       const newBooking = { booking_id: Date.now(), ...bookingData, status: "CONFIRMED" };
-      MOCK_BOOKINGS.push(newBooking);
+      bookings.push(newBooking);
+      saveBookings(bookings);
       return newBooking;
     }
   },
@@ -223,7 +235,7 @@ export const api = {
       const response = await fetch(`${API_BASE_URL}/bookings/user/${userId}`, { headers: getAuthHeaders() });
       return await handleResponse(response);
     } catch (e) {
-      return MOCK_BOOKINGS.filter(b => b.user_id === userId);
+      return getStoredBookings();
     }
   },
   cancelBooking: async (bookingId) => {
@@ -234,10 +246,12 @@ export const api = {
       });
       return await handleResponse(response);
     } catch (e) {
-      const idx = MOCK_BOOKINGS.findIndex(b => b.booking_id === bookingId);
+      const bookings = getStoredBookings();
+      const idx = bookings.findIndex(b => b.booking_id === bookingId);
       if (idx !== -1) {
-        MOCK_BOOKINGS[idx].status = "CANCELLED";
-        return MOCK_BOOKINGS[idx];
+        bookings[idx].status = "CANCELLED";
+        saveBookings(bookings);
+        return bookings[idx];
       }
       throw new Error("Booking not found");
     }
