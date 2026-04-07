@@ -44,7 +44,7 @@ const HotelDetailsPage = () => {
       {/* Header Image */}
       <div className="h-[400px] bg-slate-800 relative">
         <img 
-          src={`https://picsum.photos/seed/${hotel.hotel_id * 10}/1600/900`} 
+          src={`https://picsum.photos/seed/${(hotel.hotelId || hotel.hotel_id) * 10}/1600/900`} 
           alt={hotel.name} 
           className="w-full h-full object-cover opacity-70"
         />
@@ -88,7 +88,7 @@ const HotelDetailsPage = () => {
               <div className="space-y-4">
                 {rooms.length > 0 ? (
                   rooms.map(room => (
-                    <RoomCard key={room.room_id} room={room} hotelId={hotel.hotel_id} />
+                    <RoomCard key={room.roomId || room.room_id} room={room} hotelId={hotel.hotelId || hotel.hotel_id} />
                   ))
                 ) : (
                   <p className="text-slate-500">No rooms available for this property at the moment.</p>
