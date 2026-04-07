@@ -2,9 +2,8 @@ package com.example.HotelBookingSystem.controller;
 
 import com.example.HotelBookingSystem.entity.Notification;
 import com.example.HotelBookingSystem.entity.User;
-import com.example.HotelBookingSystem.repository.NotificationRepository;
-import com.example.HotelBookingSystem.repository.UserRepository;
 import com.example.HotelBookingSystem.security.UserDetailsImpl;
+import com.example.HotelBookingSystem.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;

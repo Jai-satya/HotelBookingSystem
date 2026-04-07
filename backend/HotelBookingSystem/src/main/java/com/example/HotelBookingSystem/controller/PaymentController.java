@@ -1,10 +1,8 @@
 package com.example.HotelBookingSystem.controller;
 
 import com.example.HotelBookingSystem.dto.PaymentRequest;
-import com.example.HotelBookingSystem.entity.Booking;
 import com.example.HotelBookingSystem.entity.Payment;
-import com.example.HotelBookingSystem.repository.BookingRepository;
-import com.example.HotelBookingSystem.repository.PaymentRepository;
+import com.example.HotelBookingSystem.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

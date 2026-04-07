@@ -1,13 +1,9 @@
 package com.example.HotelBookingSystem.controller;
 
 import com.example.HotelBookingSystem.dto.ReviewRequest;
-import com.example.HotelBookingSystem.entity.Hotel;
 import com.example.HotelBookingSystem.entity.Review;
-import com.example.HotelBookingSystem.entity.User;
-import com.example.HotelBookingSystem.repository.HotelRepository;
-import com.example.HotelBookingSystem.repository.ReviewRepository;
-import com.example.HotelBookingSystem.repository.UserRepository;
 import com.example.HotelBookingSystem.security.UserDetailsImpl;
+import com.example.HotelBookingSystem.service.ReviewService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
